@@ -25,7 +25,7 @@ async fn main() -> Result<()> {
 
     let database = database::Database::connect(&config.connection_string).await?;
 
-    let rpc_client = rpc_client::RpcClient::new(&config.rpcserver, 1000).await?;
+    let rpc_client = rpc_client::RpcClient::new(config.rpcserver(), 1000).await?;
 
     let _processing = processing::Processing::new(config, database, rpc_client).await?;
 

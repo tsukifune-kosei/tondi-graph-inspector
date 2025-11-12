@@ -1,0 +1,22 @@
+# Tondi Graph Inspector Processing Configuration
+
+# PostgreSQL connection string
+# Format: postgres://<username>:<password>@<host>:<port>/<database>
+connection_string = "postgres://arthur@localhost:5432/postgres?sslmode=disable"
+
+# Tondi RPC server address
+# For testnet, default is grpc://localhost:17110
+# For mainnet, default is grpc://localhost:50051
+rpcserver = "grpc://localhost:17110"
+
+# Network configuration
+testnet = true
+netsuffix = null  # Optional: testnet suffix number
+
+# Logging
+loglevel = "info"  # Options: trace, debug, info, warn, error
+
+# Sync options
+resync = false     # Force resync all blocks
+clear_db = false   # Clear database and sync from scratch
+

@@ -1,12 +1,14 @@
 use clap::Parser;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::env;
+use std::fs;
+use std::path::Path;
 
 #[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
+#[command(author, about, long_about = None)]
 pub struct Config {
     /// Display version information and exit
-    #[arg(short = 'V', long)]
+    #[arg(long)]
     pub show_version: bool,
 
     /// Directory to store data
@@ -47,8 +49,12 @@ pub struct Config {
     pub loglevel: String,
 
     /// RPC server to connect to
-    #[arg(short = 's', long, default_value = "localhost")]
-    pub rpcserver: String,
+    #[arg(short = 's', long)]
+    pub rpcserver: Option<String>,
+
+    /// Config file path
+    #[arg(short = 'c', long)]
+    pub config: Option<String>,
 
     /// Testnet network suffix number
     #[arg(long)]
@@ -57,6 +63,17 @@ pub struct Config {
     /// Network type (mainnet, testnet)
     #[arg(long)]
     pub testnet: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ConfigFile {
+    pub connection_string: Option<String>,
+    pub rpcserver: Option<String>,
+    pub testnet: Option<bool>,
+    pub netsuffix: Option<u32>,
+    pub loglevel: Option<String>,
+    pub resync: Option<bool>,
+    pub clear_db: Option<bool>,
 }
 
 impl Config {
@@ -68,11 +85,62 @@ impl Config {
             std::process::exit(0);
         }
 
+        // Load config file if specified
+        if let Some(config_path) = &config.config {
+            let config_file = Self::load_config_file(config_path)?;
+            // Override with config file values if not set via CLI
+            if config.connection_string.is_empty() {
+                config.connection_string = config_file.connection_string.unwrap_or_default();
+            }
+            if config.rpcserver.is_none() {
+                config.rpcserver = config_file.rpcserver;
+            }
+            if !config.testnet {
+                config.testnet = config_file.testnet.unwrap_or(false);
+            }
+            if config.netsuffix.is_none() {
+                config.netsuffix = config_file.netsuffix;
+            }
+            if config.loglevel == "info" && config_file.loglevel.is_some() {
+                config.loglevel = config_file.loglevel.unwrap();
+            }
+            if !config.resync {
+                config.resync = config_file.resync.unwrap_or(false);
+            }
+            if !config.clear_db {
+                config.clear_db = config_file.clear_db.unwrap_or(false);
+            }
+        }
+
+        // Set default RPC server for testnet if not specified
+        if config.rpcserver.is_none() {
+            if config.testnet {
+                config.rpcserver = Some("grpc://localhost:17110".to_string());
+            } else {
+                config.rpcserver = Some("grpc://localhost:50051".to_string());
+            }
+        }
+
         if config.connection_string.is_empty() {
-            anyhow::bail!("--connection-string is required");
+            anyhow::bail!("--connection-string is required (or set in config file)");
         }
 
         Ok(config)
+    }
+
+    fn load_config_file(path: &str) -> anyhow::Result<ConfigFile> {
+        let path = Path::new(path);
+        if !path.exists() {
+            anyhow::bail!("Config file not found: {}", path.display());
+        }
+        let contents = fs::read_to_string(path)?;
+        let config: ConfigFile = toml::from_str(&contents)
+            .map_err(|e| anyhow::anyhow!("Failed to parse config file: {}", e))?;
+        Ok(config)
+    }
+
+    pub fn rpcserver(&self) -> &str {
+        self.rpcserver.as_deref().unwrap_or("grpc://localhost:50051")
     }
 
     pub fn network(&self) -> String {
