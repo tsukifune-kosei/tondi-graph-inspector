@@ -68,8 +68,8 @@ impl Batch {
         
         let mut i = 0;
         while i < self.blocks.len() {
-            let (item_hash, item_block) = &self.blocks[i];
-            self.collect_direct_dependencies(tx, item_hash, item_block).await?;
+            let (item_hash, item_block) = self.blocks[i].clone();
+            self.collect_direct_dependencies(tx, &item_hash, &item_block).await?;
             
             if self.blocks.len() > MAX_SUPPORTED_MISSING_DEPENDENCIES {
                 anyhow::bail!(

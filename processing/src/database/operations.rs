@@ -14,6 +14,7 @@ struct BlockBase {
     height: u64,
 }
 
+#[derive(Clone)]
 pub struct Database {
     client: Arc<Mutex<Client>>,
     block_base_cache: Arc<Mutex<LruCache<String, BlockBase>>>,
@@ -42,9 +43,9 @@ impl Database {
 
     pub async fn run_in_transaction<F, R>(&self, f: F) -> Result<R>
     where
-        F: FnOnce(&Transaction<'_>) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<R>> + Send + '_>>,
+        F: for<'a> FnOnce(&'a Transaction<'a>) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<R>> + Send + 'a>>,
     {
-        let client = self.client.lock().await;
+        let mut client = self.client.lock().await;
         let transaction = client.transaction().await?;
         let result = f(&transaction).await?;
         transaction.commit().await?;

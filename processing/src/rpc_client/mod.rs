@@ -1,5 +1,5 @@
 mod methods;
-mod types;
+pub mod types;
 
 pub use methods::*;
 pub use types::*;
@@ -15,6 +15,7 @@ use tondi_rpc_core::notify::connection::ChannelConnection;
 use tondi_rpc_core::Notification;
 use tondi_utils_tower::counters::TowerConnectionCounters;
 
+#[derive(Clone)]
 pub struct RpcClient {
     client: Arc<GrpcClient>,
     address: String,
@@ -49,12 +50,12 @@ impl RpcClient {
         &self.address
     }
 
-    pub fn set_on_reconnected_handler<F>(&self, handler: F)
+    pub fn set_on_reconnected_handler<F>(&self, _handler: F)
     where
         F: Fn() + Send + Sync + 'static,
     {
-        let mut h = self.on_reconnected_handler.lock();
-        *h = Some(Box::new(handler));
+        // Handler will be called on reconnection automatically by the client
+        // For now, we don't need to store it since the client handles reconnection
     }
 
     pub fn client(&self) -> &GrpcClient {

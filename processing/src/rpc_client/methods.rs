@@ -1,14 +1,11 @@
 use crate::rpc_client::{RpcClient, BlockAddedNotification, VirtualChainChangedNotification};
 use tondi_rpc_core::api::rpc::RpcApi;
 use tondi_rpc_core::model::*;
-use tondi_rpc_core::notify::connection::ChannelConnection;
 use tondi_rpc_core::Notification;
-use tondi_notify::listener::ListenerLifespan;
 use tondi_hashes::Hash;
 use anyhow::Result;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use tracing::{info, warn};
 
 impl RpcClient {
     pub async fn get_info(&self) -> Result<GetInfoResponse> {
@@ -17,7 +14,7 @@ impl RpcClient {
         Ok(response)
     }
 
-    pub async fn get_block_dag_info(&self) -> Result<GetBlockDAGInfoResponse> {
+    pub async fn get_block_dag_info(&self) -> Result<GetBlockDagInfoResponse> {
         let response = self.client.get_block_dag_info().await
             .map_err(|e| anyhow::anyhow!("GetBlockDAGInfo RPC call failed: {}", e))?;
         Ok(response)
@@ -49,9 +46,9 @@ impl RpcClient {
     }
 
     pub async fn get_sink(&self) -> Result<GetSinkResponse> {
-        let sink = self.client.get_sink().await
+        let response = self.client.get_sink().await
             .map_err(|e| anyhow::anyhow!("GetSink RPC call failed: {}", e))?;
-        Ok(GetSinkResponse { sink })
+        Ok(response)
     }
 
     pub async fn get_virtual_chain_from_block(
@@ -70,15 +67,12 @@ impl RpcClient {
     where
         F: Fn(BlockAddedNotification) + Send + Sync + 'static,
     {
-        // Register a listener for block added notifications
-        let connection = ChannelConnection::new();
-        let listener_id = self.client.register_new_listener(connection.clone());
+        // Get the notification channel receiver from the client (Direct mode)
+        let receiver = self.client.notification_channel_receiver();
         
-        // Start notification for BlockAdded events
-        let scope = tondi_notify::scope::Scope::new(
-            tondi_notify::events::EventType::BlockAdded,
-            tondi_notify::scope::ScopeId::default(),
-        );
+        // Start notification for BlockAdded events using Direct mode listener ID
+        let listener_id = tondi_grpc_client::GrpcClient::DIRECT_MODE_LISTENER_ID;
+        let scope = tondi_notify::scope::Scope::BlockAdded(tondi_notify::scope::BlockAddedScope {});
         
         self.client.start_notify(listener_id, scope).await
             .map_err(|e| anyhow::anyhow!("Failed to start block added notifications: {}", e))?;
@@ -86,12 +80,12 @@ impl RpcClient {
         // Spawn a task to handle notifications
         let handler = Arc::new(Mutex::new(handler));
         tokio::spawn(async move {
-            let receiver = connection.receiver();
             while let Ok(notification) = receiver.recv().await {
                 match notification {
                     Notification::BlockAdded(notif) => {
                         let h = handler.lock().await;
-                        h(BlockAddedNotification { block: (*notif.block).clone() });
+                        let wrapper = BlockAddedNotification { block: notif.block.clone() };
+                        h(wrapper);
                     }
                     _ => {}
                 }
@@ -103,20 +97,19 @@ impl RpcClient {
 
     pub async fn register_for_virtual_chain_changed_notifications<F>(
         &self,
-        _include_accepted_transaction_ids: bool,
+        include_accepted_transaction_ids: bool,
         handler: F,
     ) -> Result<()>
     where
         F: Fn(VirtualChainChangedNotification) + Send + Sync + 'static,
     {
-        // Register a listener for virtual chain changed notifications
-        let connection = ChannelConnection::new();
-        let listener_id = self.client.register_new_listener(connection.clone());
+        // Get the notification channel receiver from the client (Direct mode)
+        let receiver = self.client.notification_channel_receiver();
         
-        // Start notification for VirtualChainChanged events
-        let scope = tondi_notify::scope::Scope::new(
-            tondi_notify::events::EventType::VirtualChainChanged,
-            tondi_notify::scope::ScopeId::default(),
+        // Start notification for VirtualChainChanged events using Direct mode listener ID
+        let listener_id = tondi_grpc_client::GrpcClient::DIRECT_MODE_LISTENER_ID;
+        let scope = tondi_notify::scope::Scope::VirtualChainChanged(
+            tondi_notify::scope::VirtualChainChangedScope::new(include_accepted_transaction_ids)
         );
         
         self.client.start_notify(listener_id, scope).await
@@ -125,15 +118,16 @@ impl RpcClient {
         // Spawn a task to handle notifications
         let handler = Arc::new(Mutex::new(handler));
         tokio::spawn(async move {
-            let receiver = connection.receiver();
             while let Ok(notification) = receiver.recv().await {
                 match notification {
                     Notification::VirtualChainChanged(notif) => {
                         let h = handler.lock().await;
-                        h(VirtualChainChangedNotification {
-                            added_chain_block_hashes: (*notif.added_chain_block_hashes).clone(),
-                            removed_chain_block_hashes: (*notif.removed_chain_block_hashes).clone(),
-                        });
+                        let wrapper = VirtualChainChangedNotification {
+                            removed_chain_block_hashes: notif.removed_chain_block_hashes.clone(),
+                            added_chain_block_hashes: notif.added_chain_block_hashes.clone(),
+                            accepted_transaction_ids: notif.accepted_transaction_ids.clone(),
+                        };
+                        h(wrapper);
                     }
                     _ => {}
                 }

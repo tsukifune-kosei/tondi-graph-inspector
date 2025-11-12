@@ -21,11 +21,11 @@ async fn main() -> Result<()> {
     let config = config::Config::load()?;
 
     info!("Application version {}", version::VERSION);
-    info!("Network {}", config.network);
+    info!("Network {}", config.network());
 
-    let database = database::Database::connect(&config.database_connection_string).await?;
+    let database = database::Database::connect(&config.connection_string).await?;
 
-    let rpc_client = rpc_client::RpcClient::new(&config.rpc_server, 1000).await?;
+    let rpc_client = rpc_client::RpcClient::new(&config.rpcserver, 1000).await?;
 
     let _processing = processing::Processing::new(config, database, rpc_client).await?;
 

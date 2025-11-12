@@ -2,7 +2,8 @@ mod batch;
 
 use crate::config::Config;
 use crate::database::{Database, Block, Edge, HeightGroup, AppConfig};
-use crate::rpc_client::{RpcClient, GetBlockDAGInfoResponse, GetBlockResponse, GetBlocksResponse, GetSinkResponse, GetVirtualChainFromBlockResponse, BlockAddedNotification, VirtualChainChangedNotification};
+use crate::rpc_client::{RpcClient, GetBlockDagInfoResponse};
+use crate::rpc_client::types::{BlockAddedNotification, VirtualChainChangedNotification};
 use anyhow::{Context, Result};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -183,7 +184,7 @@ impl Processing {
                         if !config_resync {
                             start_index = database.find_latest_stored_block_index(tx, &hashes).await?;
                             info!("Cycle {} - First {} blocks already exist in the database", vspc_cycle, start_index);
-                            start_index = start_index.saturating_sub(3000);
+                            start_index = start_index.saturating_sub(3000usize);
                         }
                     } else {
                         info!("Cycle {} - Adding {} blocks to the database", vspc_cycle, hashes.len());
@@ -444,25 +445,31 @@ impl Processing {
     }
 
     async fn initialize_consensus_events_handler(&self) -> Result<()> {
-        let database = self.database.clone();
-        let rpc_client = self.rpc_client.clone();
+        let database1 = self.database.clone();
+        let rpc_client1 = self.rpc_client.clone();
         
-        rpc_client.register_for_block_added_notifications(move |notification: BlockAddedNotification| {
-            let database = database.clone();
-            let rpc_client = rpc_client.clone();
+        let database1_clone = database1.clone();
+        let rpc_client1_clone = rpc_client1.clone();
+        rpc_client1.register_for_block_added_notifications(move |notification: BlockAddedNotification| {
+            let database = database1_clone.clone();
+            let rpc_client = rpc_client1_clone.clone();
+            let block = (*notification.block).clone();
             tokio::spawn(async move {
-                if let Err(e) = Self::process_block_notification(&database, &rpc_client, &notification.block).await {
+                if let Err(e) = Self::process_block_notification(&database, &rpc_client, &block).await {
                     warn!("Error processing block added notification: {}", e);
                 }
             });
         }).await?;
 
-        let database = self.database.clone();
-        let rpc_client = self.rpc_client.clone();
+        let database2 = self.database.clone();
+        let rpc_client2 = self.rpc_client.clone();
         
-        rpc_client.register_for_virtual_chain_changed_notifications(false, move |notification: VirtualChainChangedNotification| {
-            let database = database.clone();
-            let rpc_client = rpc_client.clone();
+        let database2_clone = database2.clone();
+        let rpc_client2_clone = rpc_client2.clone();
+        rpc_client2.register_for_virtual_chain_changed_notifications(false, move |notification: VirtualChainChangedNotification| {
+            let database = database2_clone.clone();
+            let rpc_client = rpc_client2_clone.clone();
+            let notification = notification.clone();
             tokio::spawn(async move {
                 if let Err(e) = Self::process_virtual_chain_changed_notification(&database, &rpc_client, notification).await {
                     warn!("Error processing virtual chain changed notification: {}", e);
@@ -479,11 +486,18 @@ impl Processing {
         block: &RpcBlock,
     ) -> Result<()> {
         let block_hash = block.header.hash.to_string();
+        let block = block.clone();
+        let database = database.clone();
+        let rpc_client = rpc_client.clone();
+        let database_for_closure = database.clone();
+        let rpc_client_for_closure = rpc_client.clone();
         database.run_in_transaction(move |tx| {
             let block = block.clone();
-            let rpc_client = rpc_client.clone();
+            let block_hash = block_hash.clone();
+            let rpc_client = rpc_client_for_closure.clone();
+            let database = database_for_closure.clone();
             Box::pin(async move {
-                Self::process_block_and_dependencies_static(database, tx, &rpc_client, &block_hash, &block, None).await
+                Self::process_block_and_dependencies_static(&database, tx, &rpc_client, &block_hash, &block, None).await
             })
         }).await
     }
@@ -493,20 +507,26 @@ impl Processing {
         rpc_client: &RpcClient,
         notification: VirtualChainChangedNotification,
     ) -> Result<()> {
+        let notification = notification.clone();
+        let database = database.clone();
+        let rpc_client = rpc_client.clone();
+        let database_for_closure = database.clone();
+        let rpc_client_for_closure = rpc_client.clone();
         database.run_in_transaction(move |tx| {
             let notification = notification.clone();
-            let rpc_client = rpc_client.clone();
+            let rpc_client = rpc_client_for_closure.clone();
+            let database = database_for_closure.clone();
             Box::pin(async move {
                 let mut block_is_in_virtual_selected_parent_chain: HashMap<u64, bool> = HashMap::new();
                 
-                for removed_hash in &notification.removed_chain_block_hashes {
+                for removed_hash in notification.removed_chain_block_hashes.iter() {
                     let removed_hash_str = removed_hash.to_string();
                     if let Ok(removed_block_id) = database.block_id_by_hash(tx, &removed_hash_str).await {
                         block_is_in_virtual_selected_parent_chain.insert(removed_block_id, false);
                     }
                 }
                 
-                for added_hash in &notification.added_chain_block_hashes {
+                for added_hash in notification.added_chain_block_hashes.iter() {
                     let added_hash_str = added_hash.to_string();
                     if let Ok(added_block_id) = database.block_id_by_hash(tx, &added_hash_str).await {
                         block_is_in_virtual_selected_parent_chain.insert(added_block_id, true);
@@ -518,7 +538,7 @@ impl Processing {
                 
                 let mut block_colors: HashMap<u64, String> = HashMap::new();
                 
-                for added_hash in &notification.added_chain_block_hashes {
+                for added_hash in notification.added_chain_block_hashes.iter() {
                     let added_hash_str = added_hash.to_string();
                     let rpc_block_resp = rpc_client.get_block(&added_hash_str, false).await?;
                     if let Some(verbose_data) = rpc_block_resp.block.verbose_data {
