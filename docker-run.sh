@@ -2,19 +2,18 @@
 
 set -e
 
-export KGI_RPCSERVER=${KGI_RPCSERVER-"localhost"}
+export TGI_RPCSERVER=${TGI_RPCSERVER-"localhost"}
 export POSTGRES_USER=${POSTGRES_USER-postgres}
 export POSTGRES_PASSWORD=${POSTGRES_PASSWORD-postgres}
 export POSTGRES_DB=${POSTGRES_DB-postgres}
 export API_ADDRESS=${API_ADDRESS-"localhost"}
-export KATNIP_ADDRESS=${KATNIP_ADDRESS-explorer.kaspa.org}
+export KATNIP_ADDRESS=${KATNIP_ADDRESS-explorer.tondi.org}
 export API_PORT=${API_PORT-4575}
 export WEB_PORT=${WEB_PORT-8080}
-export KASPAD_VERSION=${KASPAD_VERSION-increased-route-capacity-20000}
-export KASPAD_REPOSITORY=${KASPAD_REPOSITORY-github.com/someone235/kaspad}
-export KASPA_LIVE_ADDRESS=${KASPA_LIVE_ADDRESS-kaspa.live}
-export REACT_APP_EXPLORER_ADDRESS=${REACT_APP_EXPLORER_ADDRESS-explorer.kaspa.org}
-export KGI_POSTGRES_MOUNT=${KGI_POSTGRES_MOUNT-"~/.kgi-postgres"}
+export TONDID_VERSION=${TONDID_VERSION-latest}
+export TONDI_LIVE_ADDRESS=${TONDI_LIVE_ADDRESS-tondi.live}
+export REACT_APP_EXPLORER_ADDRESS=${REACT_APP_EXPLORER_ADDRESS-explorer.tondi.org}
+export TGI_POSTGRES_MOUNT=${TGI_POSTGRES_MOUNT-"~/.tgi-postgres"}
 
 # Verify that all the required environment variables are set
 declare -A REQUIRED_VARIABLES
@@ -25,8 +24,8 @@ REQUIRED_VARIABLES["API_ADDRESS"]="${API_ADDRESS}"
 REQUIRED_VARIABLES["KATNIP_ADDRESS"]="${KATNIP_ADDRESS}"
 REQUIRED_VARIABLES["API_PORT"]="${API_PORT}"
 REQUIRED_VARIABLES["WEB_PORT"]="${WEB_PORT}"
-REQUIRED_VARIABLES["KASPAD_VERSION"]="${KASPAD_VERSION}"
-REQUIRED_VARIABLES["KASPA_LIVE_ADDRESS"]="${KASPA_LIVE_ADDRESS}"
+REQUIRED_VARIABLES["TONDID_VERSION"]="${TONDID_VERSION}"
+REQUIRED_VARIABLES["TONDI_LIVE_ADDRESS"]="${TONDI_LIVE_ADDRESS}"
 
 REQUIRED_VARIABLE_NOT_SET=false
 for REQUIRED_VARIABLE_NAME in "${!REQUIRED_VARIABLES[@]}"; do
@@ -45,7 +44,7 @@ if [ true = "${REQUIRED_VARIABLE_NOT_SET}" ]; then
   exit 1
 fi
 
-# Build kaspa-graph-inspector
+# Build tondi-graph-inspector
 ./docker-build.sh
 
 function docker_compose() {

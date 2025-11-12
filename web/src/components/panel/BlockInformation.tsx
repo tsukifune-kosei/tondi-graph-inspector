@@ -283,7 +283,7 @@ const BlockInformation = React.forwardRef<typeof Box, BlockInformationProps>(
                         padding: '15px 20px 15px',
                     }}>
                         <Typography variant="body2">
-                            More details on <Link href={explorerAddressForBlock} target="_blank" rel="noreferrer" sx={{textDecoration: 'underline', color: 'text.primary', fontWeight: 'bold'}}>Kaspa&nbsp;Block&nbsp;Explorer</Link>
+                            More details on <Link href={explorerAddressForBlock} target="_blank" rel="noreferrer" sx={{textDecoration: 'underline', color: 'text.primary', fontWeight: 'bold'}}>Tondi&nbsp;Block&nbsp;Explorer</Link>
                         </Typography>
                     </Box>
                 </Box>

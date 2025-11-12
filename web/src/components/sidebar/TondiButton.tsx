@@ -1,11 +1,11 @@
 import { Box, ButtonBase, Tooltip, useTheme } from "@mui/material";
 import { AppConfig, isMainnet, isTestnet } from "../../model/AppConfig";
 import AnimatedItem from "../base/AnimatedItem";
-import { kaspaLiveAddress } from "../../addresses";
+import { tondiLiveAddress } from "../../addresses";
 import { Params } from "../../Params";
 import { ThemeTypeConst } from "../../model/ThemeType";
 
-const KaspaLogo = ({ appConfig, params, withLinkToKGI }: { appConfig: AppConfig | null, params: Params, withLinkToKGI: boolean }) => {
+const TondiLogo = ({ appConfig, params, withLinkToTGI }: { appConfig: AppConfig | null, params: Params, withLinkToTGI: boolean }) => {
     const theme = useTheme();
     let logoColor = theme.palette.brand.logo.main;
     let logoBkgColor = theme.palette.brand.logo.contrastText;
@@ -13,7 +13,7 @@ const KaspaLogo = ({ appConfig, params, withLinkToKGI }: { appConfig: AppConfig 
 
     if (appConfig) {
         if (!params.interactive && params.theme === ThemeTypeConst.DARK) {
-            // Supposedly this is the kaspa.org config
+            // Supposedly this is the tondi.org config
             // Do nothing
         } else if (isMainnet(appConfig)) {
             // Do nothing
@@ -26,7 +26,7 @@ const KaspaLogo = ({ appConfig, params, withLinkToKGI }: { appConfig: AppConfig 
         }
     }
 
-    const kgiUrl = `${kaspaLiveAddress}/`;
+    const tgiUrl = `${tondiLiveAddress}/`;
 
     return (
         <AnimatedItem borderRadius={"50px"} magnify={1.03}>
@@ -36,13 +36,13 @@ const KaspaLogo = ({ appConfig, params, withLinkToKGI }: { appConfig: AppConfig 
                         fontWeight: 'normal',
                         fontSize: '1.2em'
                     }}>
-                        <strong>Kaspa Graph Inspector (KGI)</strong><br />
+                        <strong>Tondi Graph Inspector (TGI)</strong><br />
                         <br />
-                        KGI: v{appConfig ? appConfig.webVersion : "n/a"}<br />
-                        Kaspad: v{appConfig ? appConfig.kaspadVersion : "n/a"}<br />
+                        TGI: v{appConfig ? appConfig.webVersion : "n/a"}<br />
+                        Tondid: v{appConfig ? appConfig.tondidVersion : "n/a"}<br />
                         <br />
                         Network: <strong>{appConfig ? appConfig.network : "n/a"}</strong>
-                        {withLinkToKGI &&
+                        {withLinkToTGI &&
                             <strong>
                                 <br /><br />
                                 Click to browse the standalone interactive site
@@ -54,7 +54,7 @@ const KaspaLogo = ({ appConfig, params, withLinkToKGI }: { appConfig: AppConfig 
                 arrow
                 enterDelay={theme.transitions.duration.enteringScreen * 1.5}
             >
-                <ButtonBase color="primary" sx={{ borderRadius: '50%' }} focusRipple target={withLinkToKGI ? "blank" : ""} href={withLinkToKGI ? kgiUrl : ""}>
+                <ButtonBase color="primary" sx={{ borderRadius: '50%' }} focusRipple target={withLinkToTGI ? "blank" : ""} href={withLinkToTGI ? tgiUrl : ""}>
                     <Box sx={{
                         borderRadius: '50%',
                         borderStyle: 'solid',
@@ -76,4 +76,4 @@ const KaspaLogo = ({ appConfig, params, withLinkToKGI }: { appConfig: AppConfig 
     );
 }
 
-export default KaspaLogo;
+export default TondiLogo;

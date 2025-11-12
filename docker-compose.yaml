@@ -18,22 +18,22 @@ services:
     user: root
     network_mode: host
     volumes:
-      - ${KGI_POSTGRES_MOUNT:-/tmp/kgi-postgres-mount}:/var/lib/postgresql/data
+      - ${TGI_POSTGRES_MOUNT:-/tmp/tgi-postgres-mount}:/var/lib/postgresql/data
 
   processing:
-    image: "kaspa-graph-inspector-processing:latest"
+    image: "tondi-graph-inspector-processing:latest"
     depends_on:
       - postgres
     command:
       - "/app/processing"
       - "--connection-string=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/${POSTGRES_DB}?sslmode=disable"
-      - "--rpcserver=${KGI_RPCSERVER}"
+      - "--rpcserver=${TGI_RPCSERVER}"
     network_mode: host
     user: root
     restart: always
 
   api:
-    image: "kaspa-graph-inspector-api:latest"
+    image: "tondi-graph-inspector-api:latest"
     depends_on:
       - postgres
     environment:
@@ -54,7 +54,7 @@ services:
     restart: always
 
   web:
-    image: "kaspa-graph-inspector-web:latest"
+    image: "tondi-graph-inspector-web:latest"
     depends_on:
       - postgres
     command:

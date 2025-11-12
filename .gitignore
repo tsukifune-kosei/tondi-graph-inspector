@@ -3,3 +3,5 @@ env.bat
 processing/kgi-processing
 processing/kgi-processing.exe
 .vscode/launch.json
+processing/target/
+processing/Cargo.lock

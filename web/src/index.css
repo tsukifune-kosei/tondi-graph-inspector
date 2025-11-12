@@ -7,11 +7,11 @@ body {
 }
 
 /*
-* Use this class to get kgi cover the whole page view.
+* Use this class to get tgi cover the whole page view.
 *
 * The important point is to define in the class the attribute 
 * `position` to anything but `static` and `initial`. This allows
-* kgi to anchor its elements relative to the wrapper.
+* tgi to anchor its elements relative to the wrapper.
 */
 .full-view-wrapper {
   height: 100vh;
@@ -25,7 +25,7 @@ body {
 *
 * The important point is to define in the class the attribute 
 * `position` to anything but `static` and `initial`. This allows
-* kgi to anchor its elements relative to the wrapper.
+* tgi to anchor its elements relative to the wrapper.
 */
 .embedded-wrapper {
   padding: 0;

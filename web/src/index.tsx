@@ -7,7 +7,7 @@ import { ThemeTypeConst } from './model/ThemeType';
 import { setTheme } from './dag/Theme';
 import { updateTheme } from './dag/EdgeSprite';
 
-const target = document.getElementById('kgi-root') as HTMLDivElement | null;
+const target = document.getElementById('tgi-root') as HTMLDivElement | null;
 if (target) {
     console.log(target.dataset);
     const defaultParams = { interactive: true, scale: 0.4, theme: ThemeTypeConst.LIGHT };

@@ -4,7 +4,7 @@ import Dag from "../../dag/Dag";
 import { AppConfig } from "../../model/AppConfig";
 import ZoomItem from "../base/ZoomItem";
 import ConnectionIssuesIndicator from "./ConnectionIssuesIndicator";
-import KaspaLogo from "./KaspaButton";
+import TondiLogo from "./TondiButton";
 import ScaleButtons from "./ScaleButtons";
 import TrackButton from "./TrackButton";
 import { Params } from "../../Params";
@@ -40,7 +40,7 @@ const Sidebar = ({ dag, appConfig, params }: { dag: Dag, appConfig: AppConfig | 
                 alignItems: 'center',
                 gap: '12px',
             }}>
-                <KaspaLogo appConfig={appConfig} params={params} withLinkToKGI={!params.interactive} />
+                <TondiLogo appConfig={appConfig} params={params} withLinkToTGI={!params.interactive} />
             </Box>
 
             <ZoomItem visible={isHavingConnectionIssuesState}>

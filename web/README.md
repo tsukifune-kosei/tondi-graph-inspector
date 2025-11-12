@@ -1,2 +1,2 @@
-kaspa-graph-inspector-web
-========================
+tondi-graph-inspector-web
+=========================

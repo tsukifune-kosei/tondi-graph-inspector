@@ -39,7 +39,7 @@ export type BlockHashById = {
 };
 
 export type AppConfig = {
-    kaspadVersion: string,
+    tondidVersion: string,
     processingVersion: string,
     network: string,
     apiVersion: string,
