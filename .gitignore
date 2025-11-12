@@ -3,5 +3,9 @@ env.bat
 processing/kgi-processing
 processing/kgi-processing.exe
 .vscode/launch.json
+
+# Rust build artifacts
+processing/target/
+processing/Cargo.lock
 processing/target/
 processing/Cargo.lock
