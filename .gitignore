@@ -7,5 +7,3 @@ processing/kgi-processing.exe
 # Rust build artifacts
 processing/target/
 processing/Cargo.lock
-processing/target/
-processing/Cargo.lock
